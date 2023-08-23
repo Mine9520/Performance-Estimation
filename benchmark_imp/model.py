@@ -15,14 +15,6 @@ def print_tensor_value(var, var_name):
 
 
 def norm_dense_features(dense_features, mean_tf, std_tf):
-    # mean_tf = tf.reduce_mean(dense_features, 0)
-    # std_tf = tf.math.reduce_std(dense_features, 0)
-
-    # normed_dense_features = tf.divide(tf.subtract(dense_features, mean_tf), std_tf + 0.00001)
-    # normed_dense_features = tf.where(tf.is_nan(normed_dense_features),
-    #                                  tf.ones_like(normed_dense_features) * 0.0,
-    #                                  normed_dense_features)
-    # normed_dense_features = tf.clip_by_value(normed_dense_features, -3, 3)
     return (dense_features - mean_tf) / std_tf
 
 
@@ -44,44 +36,32 @@ def model(sparse_feature_list, sparse_time_feature_list, dense_feature_list,
           dense_seq_feature_list, ground_truth, sample_weight):
     # print and get
     # get label
-    ground_truth = print_tensor_value(ground_truth, 'ground_truth')
     sample_weight = sample_weight[:, 0]
     # get number of imp: for evaluate
     imp = ground_truth[:, 0]
-    imp = print_tensor_value(imp, 'imp')
     print('check here', imp.shape, ground_truth.shape)
     # sparse input: id feature + time id
     sparse_input = tf.concat(sparse_feature_list + sparse_time_feature_list, 1)
-    sparse_input = print_tensor_value(sparse_input, 'id_embed_input')
     # sparse time input: time_id
     sparse_time_input = tf.concat(sparse_time_feature_list, 1)
-    sparse_time_input = print_tensor_value(sparse_time_input, 'time_embed_input')
     # dense input: impact factor
     dense_input = tf.concat(dense_feature_list, 1)
-    dense_input = print_tensor_value(dense_input, 'dense_input')
     # get mean,std of dense features
     mean_tf, std_tf = get_mean_std_tf.get_mean_std_dense()
-    mean_tf = print_tensor_value(mean_tf, 'mean_dense')
-    std_tf = print_tensor_value(std_tf, 'std_dense')
     # standardise dense features
     dense_input_norm = norm_dense_features(dense_input, mean_tf, std_tf)
-    dense_input_norm = print_tensor_value(dense_input_norm, 'dense_input_norm')
     # input: impression sequence
     # batch * seq * 1
     for i in range(len(dense_seq_feature_list)):
         dense_seq_feature_list[i] = tf.expand_dims(dense_seq_feature_list[i], -1)
     # input
     dense_seq_input = tf.concat(dense_seq_feature_list, -1)
-    dense_seq_input = print_tensor_value(dense_seq_input, 'dense_input_tensor')
     # get mean,std of impression sequence
     mean_tf, std_tf = get_mean_std_tf.get_mean_std_dense_seq(1)
-    mean_tf = print_tensor_value(mean_tf, 'mean_seq_feature')
-    std_tf = print_tensor_value(std_tf, 'std_seq_feature')
     # check the dimension of inputs
     print(mean_tf.shape, std_tf.shape, dense_seq_input.shape, len(dense_seq_feature_list))
     # standardise inputs
     dense_seq_input_norm = norm_dense_features(dense_seq_input, mean_tf, std_tf)
-    dense_seq_input_norm = print_tensor_value(dense_seq_input_norm, 'dense_tensor_norm')
     # get residual of inputs
     # dense_seq_input_norm = make_residual_seq(dense_seq_input_norm)
     # all inputs
@@ -90,11 +70,8 @@ def model(sparse_feature_list, sparse_time_feature_list, dense_feature_list,
     # ground truth
     # get mean,std of label
     mean_label_tf, std_label_tf = get_mean_std_tf.get_mean_std_label()
-    mean_label_tf = print_tensor_value(mean_label_tf, 'mean_ground_truth')
-    std_label_tf = print_tensor_value(std_label_tf, 'std_ground_truth')
     # standardise label
     ground_truth_norm = norm_dense_features(ground_truth, mean_label_tf, std_label_tf)
-    ground_truth_norm = print_tensor_value(ground_truth_norm, 'ground_truth_tensor_norm')
     print(dense_seq_input_norm.shape, fix_feature.shape, ground_truth_norm.shape)
     # network structure
     hidden_size = 256
@@ -154,10 +131,8 @@ def model(sparse_feature_list, sparse_time_feature_list, dense_feature_list,
     # prediction = out_layer_labels(tf.concat([x, fix_feature], 1))
     prediction = out_layer_labels(tf.concat([x, sparse_time_input], 1))
     # prediction = out_layer_labels(x)
-    prediction = print_tensor_value(prediction, 'prediction nn output')
     # prediction de-standardize
     prediction_re_norm = prediction * std_label_tf + mean_label_tf
-    prediction_re_norm = print_tensor_value(prediction_re_norm, 'prediction_re_norm')
     # evaluate and loss
     pre_imp = prediction_re_norm[:, 0]
     # wmape with sample weight
