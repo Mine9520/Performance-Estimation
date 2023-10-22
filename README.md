@@ -7,6 +7,6 @@ The dataset is collected from Taobao Platform, covering about 500,000 ads over a
 
 Our dataset is a commercial data obtained from Taobao platform, which requires a strict desensitization process that requires considerable time and approval.
 
-The code is a T^2CL model based on causal inference and has been submitted to WSDM 2024.
+The code is a T^2CL model based on causal inference and has been submitted to ICDE 2024.
 
 ########################################################
